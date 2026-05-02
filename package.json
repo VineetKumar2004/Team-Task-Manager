@@ -1,0 +1,29 @@
+{
+  "name": "team-task-manager",
+  "version": "1.0.0",
+  "description": "A production-ready Team Task Manager with role-based access, project management, and Kanban boards",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "task-manager",
+    "project-management",
+    "kanban",
+    "express",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "sqlite3": "^6.0.1"
+  }
+}

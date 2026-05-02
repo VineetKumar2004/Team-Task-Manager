@@ -1,0 +1,86 @@
+TEAM TASK MANAGER — DEMO VIDEO SCRIPT (Voice Over)
+=====================================================
+Total Duration: ~3 minutes
+
+── SLIDE 1: Introduction (0:00 – 0:20) ──────────────────────────────────
+"Hi, I'm Anish Behera. In this demo, I'll walk you through my
+Team Task Manager — a full-stack web application built with
+Node.js, Express, and SQLite. It features JWT authentication,
+role-based access control with Admin and Member roles, project
+management, Kanban-style task tracking, and a live analytics
+dashboard."
+
+── SLIDE 2: Registration & Login (0:20 – 0:45) ──────────────────────────
+"Let's start by registering an Admin account. As you can see, the
+registration form includes proper validations — passwords must be at
+least 8 characters with both letters and numbers, and email addresses
+are verified for correct format. I'm selecting the 'Admin' role, which
+gives full management permissions."
+
+"After clicking Create Account, the server hashes my password with
+bcrypt, generates a JWT token, and I'm immediately authenticated and
+redirected to the Dashboard."
+
+── SLIDE 3: Dashboard Overview (0:45 – 1:05) ────────────────────────────
+"The Dashboard shows key metrics at a glance — total projects, total
+tasks, completion percentage, and overdue count. Below that, we have
+a donut chart showing task distribution across statuses: Todo, In
+Progress, and Done. And there's a Recent Activity feed on the right.
+Right now everything is at zero because we just created this account."
+
+── SLIDE 4: Creating Projects (1:05 – 1:30) ──────────────────────────────
+"Let's go to Projects. Since I'm an Admin, I can create new projects.
+I'll create 'Website Redesign' with a description. Notice the project
+card appears immediately with a gradient accent and a task counter.
+Let me create a second project called 'Mobile App MVP' to show that
+multiple projects are supported."
+
+── SLIDE 5: Kanban Board & Tasks (1:30 – 2:10) ───────────────────────────
+"Clicking into a project opens the Kanban board — this is the heart of
+the app. I'll create several tasks: 'Design Homepage' with High priority
+and a due date, 'Setup CI/CD Pipeline' with Medium priority, and
+'Write API Documentation' with Low priority."
+
+"Each task shows its priority badge, assignee avatar, and due date.
+Now watch — I can change the status of any task with one click using
+these Todo, Progress, and Done buttons. Let me move 'Design Homepage'
+to In Progress and 'Write API Documentation' to Done."
+
+"The columns update instantly and the counters reflect the changes.
+We also have a search bar and priority filter at the top for quickly
+finding specific tasks."
+
+── SLIDE 6: Team Management (2:10 – 2:30) ────────────────────────────────
+"Admins can also manage team members for each project. Clicking
+'Members' opens a modal where I can add existing users to this
+project. I'll add Priya Sharma who registered as a Member.
+You can also remove members from here."
+
+── SLIDE 7: Member Role — RBAC Demo (2:30 – 2:50) ────────────────────────
+"Now let me log out and sign in as Priya Sharma, who has a Member role.
+Notice the differences: there's no 'Team' link in the sidebar, no
+'+ New Project' button, and no ability to create or delete tasks."
+
+"However, she CAN see the projects she's been added to — 'Website
+Redesign' is visible. She can view the Kanban board and update the
+status of tasks assigned to her. This demonstrates proper role-based
+access control."
+
+── SLIDE 8: Dashboard & Conclusion (2:50 – 3:10) ─────────────────────────
+"Looking at Priya's dashboard, she sees only the data relevant to her
+projects — 1 project, 4 tasks, and a 25 percent completion rate. The
+donut chart and activity feed are filtered to show only her data."
+
+"To summarize: this application features secure JWT authentication
+with bcrypt password hashing, full CRUD operations for projects and
+tasks, a visual Kanban board with inline status updates, role-based
+access control separating Admin and Member capabilities, and a real-
+time analytics dashboard."
+
+"The entire codebase includes proper server-side validations using
+express-validator, clean REST API design, and is fully deployed on
+Railway. Thank you for watching!"
+
+═══════════════════════════════════════════════════════════════════════
+END OF SCRIPT
+═══════════════════════════════════════════════════════════════════════
