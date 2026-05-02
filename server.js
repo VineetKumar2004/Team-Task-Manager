@@ -86,10 +86,11 @@ app.use((err, req, res, next) => {
 
 const initDatabase = async () => {
   try {
-    const schemaPath = path.join(__dirname, 'db', 'schema.sql');
+    const schemaFile = process.env.DATABASE_URL ? 'schema-pg.sql' : 'schema.sql';
+    const schemaPath = path.join(__dirname, 'db', schemaFile);
     const schema = fs.readFileSync(schemaPath, 'utf-8');
     await pool.exec(schema);
-    console.log('✅ Database schema initialized (all tables created).');
+    console.log(`✅ Database schema initialized using ${schemaFile}.`);
   } catch (error) {
     console.error('❌ Failed to initialize database schema:', error.message);
   }

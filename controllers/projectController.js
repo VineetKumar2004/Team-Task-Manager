@@ -35,15 +35,26 @@ const getProjects = async (req, res, next) => {
 const createProject = async (req, res, next) => {
   try {
     const { name, description } = req.body;
-    const insertResult = await pool.query(
-      `INSERT INTO projects (name, description, owner_id) VALUES ($1, $2, $3)`,
-      [name, description || null, req.user.id]
-    );
 
-    const projectResult = await pool.query(
-      'SELECT * FROM projects WHERE id = (SELECT last_insert_rowid())'
-    );
-    const project = projectResult.rows[0];
+    let project;
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL: use RETURNING
+      const insertResult = await pool.query(
+        `INSERT INTO projects (name, description, owner_id) VALUES ($1, $2, $3) RETURNING *`,
+        [name, description || null, req.user.id]
+      );
+      project = insertResult.rows[0];
+    } else {
+      // SQLite: use last_insert_rowid()
+      await pool.query(
+        `INSERT INTO projects (name, description, owner_id) VALUES ($1, $2, $3)`,
+        [name, description || null, req.user.id]
+      );
+      const projectResult = await pool.query(
+        'SELECT * FROM projects WHERE id = (SELECT last_insert_rowid())'
+      );
+      project = projectResult.rows[0];
+    }
 
     await pool.query(
       `INSERT INTO project_members (project_id, user_id) VALUES ($1, $2)`,

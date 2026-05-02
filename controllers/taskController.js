@@ -28,20 +28,42 @@ const getTasks = async (req, res, next) => {
 const createTask = async (req, res, next) => {
   try {
     const { projectId, title, description, assignedTo, priority, dueDate } = req.body;
-    await pool.query(
-      `INSERT INTO tasks (project_id, title, description, assigned_to, priority, due_date, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [projectId, title, description || null, assignedTo || null, priority || 'medium', dueDate || null, req.user.id]
-    );
 
-    const fullTask = await pool.query(
-      `SELECT t.*, u_assigned.name AS assigned_name, u_created.name AS creator_name
-       FROM tasks t
-       LEFT JOIN users u_assigned ON t.assigned_to = u_assigned.id
-       LEFT JOIN users u_created ON t.created_by = u_created.id
-       WHERE t.id = (SELECT last_insert_rowid())`
-    );
-    res.status(201).json({ success: true, data: fullTask.rows[0], message: 'Task created.' });
+    let task;
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL: use RETURNING to get the new task ID
+      const insertResult = await pool.query(
+        `INSERT INTO tasks (project_id, title, description, assigned_to, priority, due_date, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [projectId, title, description || null, assignedTo || null, priority || 'medium', dueDate || null, req.user.id]
+      );
+      const newId = insertResult.rows[0].id;
+      const fullTask = await pool.query(
+        `SELECT t.*, u_assigned.name AS assigned_name, u_created.name AS creator_name
+         FROM tasks t
+         LEFT JOIN users u_assigned ON t.assigned_to = u_assigned.id
+         LEFT JOIN users u_created ON t.created_by = u_created.id
+         WHERE t.id = $1`, [newId]
+      );
+      task = fullTask.rows[0];
+    } else {
+      // SQLite: use last_insert_rowid()
+      await pool.query(
+        `INSERT INTO tasks (project_id, title, description, assigned_to, priority, due_date, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [projectId, title, description || null, assignedTo || null, priority || 'medium', dueDate || null, req.user.id]
+      );
+      const fullTask = await pool.query(
+        `SELECT t.*, u_assigned.name AS assigned_name, u_created.name AS creator_name
+         FROM tasks t
+         LEFT JOIN users u_assigned ON t.assigned_to = u_assigned.id
+         LEFT JOIN users u_created ON t.created_by = u_created.id
+         WHERE t.id = (SELECT last_insert_rowid())`
+      );
+      task = fullTask.rows[0];
+    }
+
+    res.status(201).json({ success: true, data: task, message: 'Task created.' });
   } catch (error) {
     next(error);
   }
@@ -127,7 +149,7 @@ const getDashboard = async (req, res, next) => {
     const tasksByStatus = { todo: 0, in_progress: 0, done: 0 };
     sQ.rows.forEach(r => { tasksByStatus[r.status] = r.count; });
 
-    const oQ = await pool.query(`SELECT t.id, t.title, t.due_date, t.status, p.name AS project_name, u.name AS assigned_name FROM tasks t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.assigned_to = u.id WHERE t.due_date < DATE('now') AND t.status != 'done' ${pf} ORDER BY t.due_date ASC LIMIT 10`, params);
+    const oQ = await pool.query(`SELECT t.id, t.title, t.due_date, t.status, p.name AS project_name, u.name AS assigned_name FROM tasks t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.assigned_to = u.id WHERE t.due_date < CURRENT_DATE AND t.status != 'done' ${pf} ORDER BY t.due_date ASC LIMIT 10`, params);
     const rQ = await pool.query(`SELECT t.id, t.title, t.status, t.priority, t.created_at, p.name AS project_name, u.name AS assigned_name FROM tasks t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.assigned_to = u.id WHERE 1=1 ${pf} ORDER BY t.created_at DESC LIMIT 5`, params);
 
     res.json({ success: true, data: { totalProjects, totalTasks, tasksByStatus, overdueTasks: oQ.rows, recentActivity: rQ.rows } });
