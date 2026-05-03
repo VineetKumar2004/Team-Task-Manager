@@ -31,7 +31,20 @@ CREATE TABLE IF NOT EXISTS tasks (
   assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
   status      TEXT DEFAULT 'todo' CHECK (status IN ('todo', 'in_progress', 'done')),
   priority    TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
-  due_date    TEXT,
+  due_date    DATE,
   created_by  INTEGER REFERENCES users(id),
   created_at  TIMESTAMP DEFAULT NOW()
 );
+
+-- Migration: convert due_date from TEXT to DATE if it was created as TEXT
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'tasks' AND column_name = 'due_date' AND data_type = 'text'
+  ) THEN
+    ALTER TABLE tasks ALTER COLUMN due_date TYPE DATE USING (
+      CASE WHEN due_date IS NOT NULL AND due_date != '' THEN due_date::DATE ELSE NULL END
+    );
+  END IF;
+END $$;

@@ -149,7 +149,10 @@ const getDashboard = async (req, res, next) => {
     const tasksByStatus = { todo: 0, in_progress: 0, done: 0 };
     sQ.rows.forEach(r => { tasksByStatus[r.status] = r.count; });
 
-    const oQ = await pool.query(`SELECT t.id, t.title, t.due_date, t.status, p.name AS project_name, u.name AS assigned_name FROM tasks t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.assigned_to = u.id WHERE t.due_date < CURRENT_DATE AND t.status != 'done' ${pf} ORDER BY t.due_date ASC LIMIT 10`, params);
+    const overdueCondition = process.env.DATABASE_URL
+      ? `t.due_date IS NOT NULL AND t.due_date::DATE < CURRENT_DATE`
+      : `t.due_date IS NOT NULL AND t.due_date < date('now')`;
+    const oQ = await pool.query(`SELECT t.id, t.title, t.due_date, t.status, p.name AS project_name, u.name AS assigned_name FROM tasks t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.assigned_to = u.id WHERE ${overdueCondition} AND t.status != 'done' ${pf} ORDER BY t.due_date ASC LIMIT 10`, params);
     const rQ = await pool.query(`SELECT t.id, t.title, t.status, t.priority, t.created_at, p.name AS project_name, u.name AS assigned_name FROM tasks t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.assigned_to = u.id WHERE 1=1 ${pf} ORDER BY t.created_at DESC LIMIT 5`, params);
 
     res.json({ success: true, data: { totalProjects, totalTasks, tasksByStatus, overdueTasks: oQ.rows, recentActivity: rQ.rows } });
