@@ -96,24 +96,56 @@ const initDatabase = async () => {
   }
 };
 
-const seedUsers = async () => {
+const seedDatabase = async () => {
   try {
     const bcrypt = require('bcryptjs');
+    
+    // 1. Seed Users
     const users = [
       { name: 'Anish Admin', email: 'anish@admin.com', password: 'admin123', role: 'admin' },
-      { name: 'Admin Final', email: 'admin_final@demo.com', password: 'admin123', role: 'admin' },
-      { name: 'Priya Member', email: 'priya@member.com', password: 'member123', role: 'member' },
-      { name: 'Demo Member', email: 'member@demo.com', password: 'member123', role: 'member' }
+      { name: 'Priya Member', email: 'priya@member.com', password: 'member123', role: 'member' }
     ];
+    let userIds = {};
     for (const u of users) {
-      const check = await pool.query('SELECT id FROM users WHERE email = $1', [u.email]);
-      if (check.rows.length === 0) {
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(u.password, salt);
-        await pool.query('INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)', [u.name, u.email, hash, u.role]);
+      let res = await pool.query('SELECT id FROM users WHERE email = $1', [u.email]);
+      if (res.rows.length === 0) {
+        const hash = await bcrypt.hash(u.password, 10);
+        res = await pool.query('INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id', [u.name, u.email, hash, u.role]);
       }
+      userIds[u.email] = res.rows[0].id;
     }
-    console.log('✅ Database seeded with test users.');
+
+    // 2. Seed Projects (only if none exist)
+    const projectCheck = await pool.query('SELECT COUNT(*) FROM projects');
+    if (parseInt(projectCheck.rows[0].count) === 0) {
+      console.log('🌱 Seeding mock projects and tasks...');
+      const projects = [
+        { name: 'Website Redesign', desc: 'Modernizing the corporate landing page.', owner: userIds['anish@admin.com'] },
+        { name: 'Mobile App Alpha', desc: 'Developing the initial React Native build.', owner: userIds['anish@admin.com'] },
+        { name: 'Security Audit', desc: 'Q2 infrastructure security review.', owner: userIds['anish@admin.com'] }
+      ];
+      
+      for (const p of projects) {
+        const pRes = await pool.query('INSERT INTO projects (name, description, owner_id) VALUES ($1, $2, $3) RETURNING id', [p.name, p.desc, p.owner]);
+        const pid = pRes.rows[0].id;
+
+        // 3. Seed Tasks for each project
+        const tasks = [
+          { title: 'Finalize UI Mockups', status: 'done', priority: 'high', due: '2026-04-01' },
+          { title: 'Setup API Endpoints', status: 'in_progress', priority: 'medium', due: '2026-05-15' },
+          { title: 'Database Optimization', status: 'todo', priority: 'low', due: '2026-05-20' },
+          { title: 'Fix Login Bug', status: 'todo', priority: 'high', due: '2026-05-01' } // Overdue
+        ];
+
+        for (const t of tasks) {
+          await pool.query(
+            'INSERT INTO tasks (project_id, title, status, priority, due_date, created_by, assigned_to) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [pid, t.title, t.status, t.priority, t.due, userIds['anish@admin.com'], userIds['priya@member.com']]
+          );
+        }
+      }
+      console.log('✅ Mock data seeded successfully.');
+    }
   } catch (error) {
     console.error('❌ Seeding failed:', error.message);
   }
@@ -121,7 +153,7 @@ const seedUsers = async () => {
 
 const startServer = async () => {
   await initDatabase();
-  await seedUsers();
+  await seedDatabase();
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 http://localhost:${PORT}`);
