@@ -96,8 +96,32 @@ const initDatabase = async () => {
   }
 };
 
+const seedUsers = async () => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const users = [
+      { name: 'Anish Admin', email: 'anish@admin.com', password: 'admin123', role: 'admin' },
+      { name: 'Admin Final', email: 'admin_final@demo.com', password: 'admin123', role: 'admin' },
+      { name: 'Priya Member', email: 'priya@member.com', password: 'member123', role: 'member' },
+      { name: 'Demo Member', email: 'member@demo.com', password: 'member123', role: 'member' }
+    ];
+    for (const u of users) {
+      const check = await pool.query('SELECT id FROM users WHERE email = $1', [u.email]);
+      if (check.rows.length === 0) {
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(u.password, salt);
+        await pool.query('INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)', [u.name, u.email, hash, u.role]);
+      }
+    }
+    console.log('✅ Database seeded with test users.');
+  } catch (error) {
+    console.error('❌ Seeding failed:', error.message);
+  }
+};
+
 const startServer = async () => {
   await initDatabase();
+  await seedUsers();
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 http://localhost:${PORT}`);
