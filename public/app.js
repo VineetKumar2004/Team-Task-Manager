@@ -72,7 +72,7 @@ async function pgDash(){
   document.getElementById('app').innerHTML=wrap(`<div class="page-header"><h1>Dashboard</h1></div><div id="dc"><div class="stats-grid"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div></div>`);
   try{
     const r=await api.get('/dashboard'),d=r.data.data;
-    const t=d.tasksByStatus.todo||0,ip=d.tasksByStatus.in_progress||0,dn=d.tasksByStatus.done||0,tot=t+ip+dn;
+    const t=Number(d.tasksByStatus.todo||0),ip=Number(d.tasksByStatus.in_progress||0),dn=Number(d.tasksByStatus.done||0),tot=t+ip+dn;
     const pct=tot?Math.round(dn/tot*100):0;
     const bg=tot>0?`conic-gradient(#8b949e 0% ${t/tot*100}%,#06b6d4 ${t/tot*100}% ${(t+ip)/tot*100}%,#10b981 ${(t+ip)/tot*100}% 100%)`:'conic-gradient(#21262d 0% 100%)';
     document.getElementById('dc').innerHTML=`
